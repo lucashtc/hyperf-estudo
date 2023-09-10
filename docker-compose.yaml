@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  hyperf-skeleton:
+    build: .
+    container_name: hyperf-skeleton
+    working_dir: /app
+    # entrypoint: php bin/hyperf.php start
+    entrypoint: php bin/hyperf.php server:watch
+    volumes:
+      - ./:/app
+    ports:
+      - 9501:9501
