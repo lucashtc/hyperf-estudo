@@ -10,8 +10,12 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 use Hyperf\HttpServer\Router\Router;
+use App\Middleware\Auth\JWTMiddleware;
+use App\Controller\AuthController;
 
-Router::addRoute(['GET', 'POST', 'HEAD'], '/', 'App\Controller\IndexController@index');
+Router::addRoute(['GET', 'POST', 'HEAD'], '/', 'App\Controller\IndexController@index', ['middleware' => [JWTMiddleware::class]]);
+
+Router::post('/login', [AuthController::class, 'login']);
 
 Router::get('/favicon.ico', function () {
     return '';

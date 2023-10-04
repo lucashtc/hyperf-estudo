@@ -1,12 +1,14 @@
 <?php
 
-namespace App\Service\JWT;
+namespace App\Helper;
 
+use App\Exception\Handler\AuthJWTException;
+use Psr\Http\Message\ServerRequestInterface;
 use DateTime;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class JWTAuth
+class JWTHelper
 {
     protected string $key;
     protected array $payload = [];
@@ -16,7 +18,7 @@ class JWTAuth
     public function __construct()
     {
         $this->timeNow = new DateTime();
-        $this->key = $this->getKeySecrect();
+        $this->key = env("KEY_JWT", NULL);
         $this->payload = [
             'iss' => env('HOST_NAME', ""),
             'aud' => env('HOST_NAME', ""),
@@ -41,7 +43,7 @@ class JWTAuth
         try {
             return JWT::decode($jwt, new Key($this->key, 'HS256'));
         } catch (\Exception $e) {
-            return null;
+            throw new AuthJWTException('Token Invalid', 401);
         }
     }
 
@@ -53,16 +55,23 @@ class JWTAuth
         return $this->encode();
     }
 
-    /**
-     * Return key secrect for encrypt jwt
-     */
-    protected function getKeySecrect()
+    public static function getJWTHeader(ServerRequestInterface $request): string
     {
-        $key = env("KEY_JWT", NULL);
-        if ($key) {
-            return $key;
-        } else {
-            new \Exception("KEY_JWT not set in .env", 1);
+        $headerAuth = $request->getHeader('authorization');
+        $matches = '';
+        if (count($headerAuth) === 0) {
+            throw new AuthJWTException('authorization header not found', 401);
         }
+
+        if (!preg_match('/Bearer\s(\S+)/', $headerAuth[0], $matches)) {
+            throw new AuthJWTException('token not found', 401);
+        }
+
+        $jwt = $matches[1];
+        if (!$jwt) {
+            throw new AuthJWTException('could not extract token', 401);
+        }
+
+        return $jwt;
     }
 }
